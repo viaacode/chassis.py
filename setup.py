@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(name='viaa',
       version='0.0.1',
-      url='https://github.com/rudolfdg/viaa',
+      url='https://github.com/rudolfdg/viaa-chassis',
       license='MIT',
       author='Rudolf',
       author_email='rudolf.degeijter@viaa.be',

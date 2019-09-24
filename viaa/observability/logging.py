@@ -16,6 +16,7 @@ logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
 )
+
 structlog.configure(
     processors=[
         # This performs the initial filtering, so we don't
