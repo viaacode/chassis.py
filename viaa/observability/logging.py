@@ -11,36 +11,55 @@ import sys
 
 import structlog
 
-# logger configuration
-logging.basicConfig(format="%(message)s", level=logging.INFO, stream=sys.stdout)
-
+logging.basicConfig(
+    format="%(message)s",
+    stream=sys.stdout,
+    level=logging.INFO,
+)
 structlog.configure(
     processors=[
-        structlog.stdlib.filter_by_level,  # First step, filter by level to
-        structlog.stdlib.add_logger_name,  # module name
-        structlog.stdlib.add_log_level,  # log level
-        structlog.stdlib.PositionalArgumentsFormatter(),  # % formatting
-        structlog.processors.StackInfoRenderer(),  # adds stack if stack_info=True
-        structlog.processors.format_exc_info,  # Formats exc_info
-        structlog.processors.UnicodeDecoder(),  # Decodes all bytes in dict to unicode
+        # This performs the initial filtering, so we don't
+        # evaluate e.g. DEBUG when unnecessary
+        structlog.stdlib.filter_by_level,
+        # Adds logger=module_name (e.g __main__)
+        structlog.stdlib.add_logger_name,
+        # Adds level=info, debug, etc.
+        structlog.stdlib.add_log_level,
+        # Performs the % string interpolation as expected
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        # Include the stack when stack_info=True
+        structlog.processors.StackInfoRenderer(),
+        # Include the exception when exc_info=True
+        # e.g log.exception() or log.warning(exc_info=True)'s behavior
+        structlog.processors.format_exc_info,
+        # Decodes the unicode values in any kv pairs
+        structlog.processors.UnicodeDecoder(),
+        # Adds timestamp in iso format to each log
         structlog.processors.TimeStamper(
             fmt="iso"
-        ),  # Because timestamps! UTC by default
-        structlog.stdlib.render_to_log_kwargs,  # Preps for logging call
-        structlog.processors.JSONRenderer(),  # to json
+        ),
+        # Creates the necessary args, kwargs for log()
+        structlog.stdlib.render_to_log_kwargs,
+        # Print as json
+        structlog.processors.JSONRenderer(), 
     ],
+    # Our "event_dict" is explicitly a dict
+    # There's also structlog.threadlocal.wrap_dict(dict) in some examples
+    # which keeps global context as well as thread locals
     context_class=dict,
+    # Provides the logging.Logger for the underlaying log call
     logger_factory=structlog.stdlib.LoggerFactory(),
+    # Provides predefined methods - log.debug(), log.info(), etc.
     wrapper_class=structlog.stdlib.BoundLogger,
+    # Caching of our logger
     cache_logger_on_first_use=True,
 )
 
-def get_logger():
+def get_logger(name = ""):
     """Return a logger
     
     Returns:
         BoundLoggerLazyProxy -- logger
     """
-    logger = structlog.get_logger()
+    logger = structlog.get_logger(name)
     return logger
-    
