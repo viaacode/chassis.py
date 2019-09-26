@@ -10,5 +10,5 @@ setup(name='viaa',
       packages=find_packages(exclude=['tests']),
       long_description=open('README.md').read(),
       zip_safe=False,
-      install_requires=['structlog==19.1.0']
+      install_requires=['structlog==19.1.0', 'pyyaml==5.1.2']
 )
