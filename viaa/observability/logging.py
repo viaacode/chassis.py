@@ -6,14 +6,19 @@
 #  viaa/logging.py
 #  
 
+import inspect
 import logging
 import sys
 
 import structlog
+from structlog._frames import _find_first_app_frame_and_name
+
+from viaa.configuration import ConfigParser
+
 
 loggers: dict = {}
 
-def get_logger(name="", config=None):
+def get_logger(name="", config: ConfigParser=None):
     """Return a logger
     
     Returns:
@@ -28,7 +33,7 @@ def get_logger(name="", config=None):
         loggers[name] = logger
     
     if config is not None:
-        logger = __configure(logger, config["logging"])
+        logger = __configure(logger, config.config["logging"])
 
     return logger
 
@@ -43,7 +48,7 @@ def __init():
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO,
+        level=logging.INFO
     )
 
     structlog.configure(
@@ -63,13 +68,15 @@ def __init():
             # e.g log.exception() or log.warning(exc_info=True)'s behavior
             structlog.processors.format_exc_info,
             # Decodes the unicode values in any kv pairs
-            structlog.processors.UnicodeDecoder(),
+            structlog.processors.UnicodeDecoder(),            
             # Adds timestamp in iso format to each log
             structlog.processors.TimeStamper(
                 fmt="iso"
             ),
+            add_log_source_to_dict,
             # Creates the necessary args, kwargs for log()
-            structlog.stdlib.render_to_log_kwargs,
+            # structlog.stdlib.
+            render_to_log_kwargs,
             # Print as json
             structlog.processors.JSONRenderer(), 
         ],
@@ -84,3 +91,38 @@ def __init():
         # Caching of our logger
         cache_logger_on_first_use=True,
     )
+    
+def add_log_source_to_dict(logger, _, event_dict):
+    # If by any chance the record already contains a `modline` key,
+    # (very rare) move that into a 'modline_original' key
+    if 'source' in event_dict:
+        event_dict['source_original'] = event_dict['source']
+    
+    f, name = _find_first_app_frame_and_name(additional_ignores=[
+        "logging",
+        __name__
+    ])
+    
+    if not f:
+        return event_dict
+    filename = inspect.getfile(f)
+    frameinfo = inspect.getframeinfo(f)
+    if not frameinfo:
+        return event_dict
+    if frameinfo:
+        event_dict['source'] = '{}:{}:{}'.format(
+            filename,
+            frameinfo.function,
+            frameinfo.lineno,
+        )
+    return event_dict
+
+def render_to_log_kwargs(wrapped_logger, method_name, event_dict):
+    return {
+        "message": event_dict.pop("event"), 
+        "source": event_dict.pop("source"), 
+        "logger": event_dict.pop("logger"), 
+        "level": event_dict.pop("level"), 
+        "timestamp": event_dict.pop("timestamp"), 
+        "extra": event_dict
+    }

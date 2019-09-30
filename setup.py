@@ -8,7 +8,7 @@ setup(name='viaa',
       author_email='rudolf.degeijter@viaa.be',
       description='VIAA Chassis',
       packages=find_packages(exclude=['tests']),
-      long_description=open('README.md').read(),
+      long_description=open('README.md', encoding="utf8").read(),
       zip_safe=False,
       install_requires=['structlog==19.1.0', 'pyyaml==5.1.2']
 )
