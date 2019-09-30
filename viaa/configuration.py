@@ -20,4 +20,3 @@ class ConfigParser():
             
         if "viaa" in cfg:    
             self.config = cfg["viaa"]
-    

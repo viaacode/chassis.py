@@ -19,11 +19,11 @@ from viaa.configuration import ConfigParser
 loggers: dict = {}
 
 def get_logger(name="", config: ConfigParser=None):
-    """Return a logger
-    
-    Returns:
-        BoundLoggerLazyProxy -- logger
+    """Return a logger with the specified name and configuration, creating it if necessary.
+    If no name is specified, return the root logger.
+    If a config is specified it will override the current config for a logger.
     """
+
     __init()
     
     if name in loggers:
@@ -38,6 +38,12 @@ def get_logger(name="", config: ConfigParser=None):
     return logger
 
 def __configure(logger, config: dict) -> None:
+    """Configures the logger with all relevant configuration from the passed config.
+    
+    Arguments:
+        logger {BoundLoggerLazyProxy} -- Instance of the logger that needs to be configured.
+        config {dict} -- Configuration for the logging.
+    """
     if "level" in config:
         logger.setLevel(config["level"])
         
@@ -48,7 +54,7 @@ def __init():
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.INFO
+        level=logging.INFO,
     )
 
     structlog.configure(
@@ -73,10 +79,10 @@ def __init():
             structlog.processors.TimeStamper(
                 fmt="iso"
             ),
-            add_log_source_to_dict,
+            __add_log_source_to_dict,
             # Creates the necessary args, kwargs for log()
             # structlog.stdlib.
-            render_to_log_kwargs,
+            __render_to_log_kwargs,
             # Print as json
             structlog.processors.JSONRenderer(), 
         ],
@@ -92,7 +98,7 @@ def __init():
         cache_logger_on_first_use=True,
     )
     
-def add_log_source_to_dict(logger, _, event_dict):
+def __add_log_source_to_dict(logger, _, event_dict):
     # If by any chance the record already contains a `modline` key,
     # (very rare) move that into a 'modline_original' key
     if 'source' in event_dict:
@@ -117,7 +123,7 @@ def add_log_source_to_dict(logger, _, event_dict):
         )
     return event_dict
 
-def render_to_log_kwargs(wrapped_logger, method_name, event_dict):
+def __render_to_log_kwargs(logger, method_name, event_dict):
     return {
         "message": event_dict.pop("event"), 
         "source": event_dict.pop("source"), 
