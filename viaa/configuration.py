@@ -8,8 +8,8 @@ class ConfigParser():
     config = {}
     def __init__(self):
         cfg = {}
-        # Take config from commandline arguments
-        # Take config from environment variables
+        # TODO: Take config from commandline arguments
+        # TODO: Take config from environment variables
         # Take config from the user's config file
         if os.path.isfile(os.getcwd() + "/config.yml"):
             with open(os.getcwd() + "/config.yml", "r") as ymlfile:
