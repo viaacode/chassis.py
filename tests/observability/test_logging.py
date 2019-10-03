@@ -11,9 +11,9 @@ def test_log_info(caplog, capsys):
     
     logger.info("test_log_info")
     
-    assert len(caplog.records) == 1
-    record = next(iter(caplog.records))
-    record_object = json.loads(record.message)
+    out, err = capsys.readouterr()
+    
+    record_object = json.loads(out)
     
     assert record_object["message"] == "test_log_info"
     assert record_object["logger"] == "test_logging"
@@ -26,9 +26,9 @@ def test_log_warning(caplog, capsys):
     
     logger.warning("test_log_warning")
     
-    assert len(caplog.records) == 1
-    record = next(iter(caplog.records))
-    record_object = json.loads(record.message)
+    out, err = capsys.readouterr()
+    
+    record_object = json.loads(out)
     
     assert record_object["message"] == "test_log_warning"
     assert record_object["logger"] == "test_logging"
@@ -41,9 +41,9 @@ def test_log_critical(caplog, capsys):
     
     logger.critical("test_log_critical")
     
-    assert len(caplog.records) == 1
-    record = next(iter(caplog.records))
-    record_object = json.loads(record.message)
+    out, err = capsys.readouterr()
+    
+    record_object = json.loads(out)
     
     assert record_object["message"] == "test_log_critical"
     assert record_object["logger"] == "test_logging"
@@ -56,9 +56,9 @@ def test_logger_name(caplog, capsys):
     
     logger.info("test")
     
-    assert len(caplog.records) == 1
-    record = next(iter(caplog.records))
-    record_object = json.loads(record.message)
+    out, err = capsys.readouterr()
+    
+    record_object = json.loads(out)
     
     assert record_object["message"] == "test"
     assert record_object["logger"] == "test_naam"
