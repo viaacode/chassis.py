@@ -11,10 +11,10 @@ import logging
 import sys
 
 import structlog
+from pythonjsonlogger import jsonlogger
 from structlog._frames import _find_first_app_frame_and_name
 
 from viaa.configuration import ConfigParser
-
 
 loggers: dict = {}
 
@@ -51,12 +51,6 @@ def __configure(logger, config: dict) -> None:
 
 
 def __init():
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=logging.INFO,
-    )
-
     structlog.configure(
         processors=[
             # This performs the initial filtering, so we don't
@@ -79,28 +73,24 @@ def __init():
             structlog.processors.TimeStamper(
                 fmt="iso"
             ),
+            # Adds linenumber and file to each log
             __add_log_source_to_dict,
-            # Creates the necessary args, kwargs for log()
-            # structlog.stdlib.
-            __render_to_log_kwargs,
-            # Print as json
-            structlog.processors.JSONRenderer(), 
+            structlog.stdlib.render_to_log_kwargs,
         ],
-        # Our "event_dict" is explicitly a dict
-        # There's also structlog.threadlocal.wrap_dict(dict) in some examples
-        # which keeps global context as well as thread locals
         context_class=dict,
-        # Provides the logging.Logger for the underlaying log call
         logger_factory=structlog.stdlib.LoggerFactory(),
-        # Provides predefined methods - log.debug(), log.info(), etc.
         wrapper_class=structlog.stdlib.BoundLogger,
-        # Caching of our logger
         cache_logger_on_first_use=True,
     )
     
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(jsonlogger.JsonFormatter())
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    
 def __add_log_source_to_dict(logger, _, event_dict):
-    # If by any chance the record already contains a `modline` key,
-    # (very rare) move that into a 'modline_original' key
+    # If by any chance the record already contains a `source` key,
+    # (very rare) move that into a 'source_original' key
     if 'source' in event_dict:
         event_dict['source_original'] = event_dict['source']
     
@@ -123,12 +113,3 @@ def __add_log_source_to_dict(logger, _, event_dict):
         )
     return event_dict
 
-def __render_to_log_kwargs(logger, method_name, event_dict):
-    return {
-        "message": event_dict.pop("event"), 
-        "source": event_dict.pop("source"), 
-        "logger": event_dict.pop("logger"), 
-        "level": event_dict.pop("level"), 
-        "timestamp": event_dict.pop("timestamp"), 
-        "extra": event_dict
-    }
