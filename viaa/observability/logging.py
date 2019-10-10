@@ -4,7 +4,7 @@
 #  @Author: Rudolf De Geijter
 #
 #  viaa/logging.py
-#  
+#
 
 import inspect
 import logging
@@ -25,13 +25,13 @@ def get_logger(name="", config: ConfigParser=None):
     """
 
     __init()
-    
+
     if name in loggers:
         logger = loggers.get(name)
     else:
         logger = structlog.get_logger(name)
         loggers[name] = logger
-    
+
     if config is not None:
         logger = __configure(logger, config.config["logging"])
 
@@ -39,14 +39,14 @@ def get_logger(name="", config: ConfigParser=None):
 
 def __configure(logger, config: dict) -> None:
     """Configures the logger with all relevant configuration from the passed config.
-    
+
     Arguments:
         logger {BoundLoggerLazyProxy} -- Instance of the logger that needs to be configured.
         config {dict} -- Configuration for the logging.
     """
     if "level" in config:
         logger.setLevel(config["level"])
-        
+
     return logger
 
 
@@ -68,7 +68,7 @@ def __init():
             # e.g log.exception() or log.warning(exc_info=True)'s behavior
             structlog.processors.format_exc_info,
             # Decodes the unicode values in any kv pairs
-            structlog.processors.UnicodeDecoder(),            
+            structlog.processors.UnicodeDecoder(),
             # Adds timestamp in iso format to each log
             structlog.processors.TimeStamper(
                 fmt="iso"
@@ -82,23 +82,25 @@ def __init():
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
-    
+
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(jsonlogger.JsonFormatter())
     root_logger = logging.getLogger()
-    root_logger.addHandler(handler)
-    
+    if len(root_logger.handlers) == 0:
+        root_logger.addHandler(handler)
+
+
 def __add_log_source_to_dict(logger, _, event_dict):
     # If by any chance the record already contains a `source` key,
     # (very rare) move that into a 'source_original' key
     if 'source' in event_dict:
         event_dict['source_original'] = event_dict['source']
-    
+
     f, name = _find_first_app_frame_and_name(additional_ignores=[
         "logging",
         __name__
     ])
-    
+
     if not f:
         return event_dict
     filename = inspect.getfile(f)
@@ -112,4 +114,3 @@ def __add_log_source_to_dict(logger, _, event_dict):
             frameinfo.lineno,
         )
     return event_dict
-
