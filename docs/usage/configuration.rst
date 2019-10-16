@@ -31,3 +31,9 @@ Example of a ``config.yml`` file.
         level: 40
     application:
       throttle_time: 10
+
+API
+---
+
+.. automodule:: viaa.configuration
+    :members:
