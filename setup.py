@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(name='viaa-chassis',
-      version='0.0.3',
+      version='0.0.4',
       url='https://github.com/viaacode/chassis.py',
       license='GPL',
       author='Rudolf',
@@ -10,5 +10,6 @@ setup(name='viaa-chassis',
       packages=find_packages(exclude=['tests']),
       long_description=open('README.md', encoding="utf8").read(),
       zip_safe=False,
-      install_requires=['structlog==19.1.0', 'pyyaml==5.1.2', 'python-json-logger==0.1.11']
+      setup_requires=['wheel'],
+      install_requires=['structlog>=19.2.0', 'pyyaml>=5.1.2', 'python-json-logger>=0.1.11'],
 )
