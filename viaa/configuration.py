@@ -1,8 +1,8 @@
 import os
-import sys
 import yaml
 
-class ConfigParser():
+
+class ConfigParser:
     """The ConfigParser has a config dictionary containing
     all the configuration for the Chassis, but it can also be
     used for program-specific configuration.
@@ -14,9 +14,9 @@ class ConfigParser():
     3. Config file
     4. Defaults
     """
-    path = sys.path.append(os.getcwd())
 
-    config = {}
+    config: dict = {}
+
     def __init__(self):
         cfg = {}
         # TODO: Take config from commandline arguments
@@ -27,7 +27,10 @@ class ConfigParser():
                 cfg: dict = yaml.load(ymlfile, Loader=yaml.FullLoader)
         # Fallback to default
         else:
-            cfg = {"viaa":{"logging": {"level": 20}}}
+            cfg = {"viaa": {"logging": {"level": 20}}}
 
         if "viaa" in cfg:
             self.config = cfg["viaa"]
+
+    def get_config(self) -> dict:
+        return self.config

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #  @Author: Rudolf De Geijter
@@ -18,7 +17,8 @@ from viaa.configuration import ConfigParser
 
 loggers: dict = {}
 
-def get_logger(name="", config: ConfigParser=None):
+
+def get_logger(name="", config: ConfigParser = None):
     """Return a logger with the specified name and configuration, creating it if necessary.
     If no name is specified, return the root logger.
     If a config is specified it will override the current config for a logger.
@@ -37,7 +37,8 @@ def get_logger(name="", config: ConfigParser=None):
 
     return logger
 
-def __configure(logger, config: dict) -> None:
+
+def __configure(logger, config: dict) -> object:
     """Configures the logger with all relevant configuration from the passed config.
 
     Arguments:
@@ -70,9 +71,7 @@ def __init():
             # Decodes the unicode values in any kv pairs
             structlog.processors.UnicodeDecoder(),
             # Adds timestamp in iso format to each log
-            structlog.processors.TimeStamper(
-                fmt="iso"
-            ),
+            structlog.processors.TimeStamper(fmt="iso"),
             # Adds linenumber and file to each log
             __add_log_source_to_dict,
             structlog.stdlib.render_to_log_kwargs,
@@ -93,24 +92,19 @@ def __init():
 def __add_log_source_to_dict(logger, _, event_dict):
     # If by any chance the record already contains a `source` key,
     # (very rare) move that into a 'source_original' key
-    if 'source' in event_dict:
-        event_dict['source_original'] = event_dict['source']
+    if "source" in event_dict:
+        event_dict["source_original"] = event_dict["source"]
 
-    f, name = _find_first_app_frame_and_name(additional_ignores=[
-        "logging",
-        __name__
-    ])
+    frame = _find_first_app_frame_and_name(additional_ignores=["logging", __name__])
 
-    if not f:
+    if not frame:
         return event_dict
-    filename = inspect.getfile(f)
-    frameinfo = inspect.getframeinfo(f)
+    filename = inspect.getfile(frame)
+    frameinfo = inspect.getframeinfo(frame)
     if not frameinfo:
         return event_dict
     if frameinfo:
-        event_dict['source'] = '{}:{}:{}'.format(
-            filename,
-            frameinfo.function,
-            frameinfo.lineno,
+        event_dict["source"] = "{}:{}:{}".format(
+            filename, frameinfo.function, frameinfo.lineno,
         )
     return event_dict
