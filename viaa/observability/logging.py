@@ -85,8 +85,10 @@ def __init():
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(jsonlogger.JsonFormatter())
     root_logger = logging.getLogger()
-    if len(root_logger.handlers) == 0:
-        root_logger.addHandler(handler)
+
+    # Handlers are removed because otherwise multiple get_logger calls leads to multiple log lines.
+    root_logger.handlers = []
+    root_logger.addHandler(handler)
 
 
 def __add_log_source_to_dict(logger, _, event_dict):
@@ -95,7 +97,9 @@ def __add_log_source_to_dict(logger, _, event_dict):
     if "source" in event_dict:
         event_dict["source_original"] = event_dict["source"]
 
-    frame = _find_first_app_frame_and_name(additional_ignores=["logging", __name__])
+    (frame, name) = _find_first_app_frame_and_name(
+        additional_ignores=["logging", __name__]
+    )
 
     if not frame:
         return event_dict
