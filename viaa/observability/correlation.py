@@ -1,5 +1,6 @@
 import sys
 import uuid
+from functools import wraps
 
 from flask import request
 from werkzeug.wrappers import Request, Response, ResponseStream
@@ -14,9 +15,34 @@ def meemooId():
     return meemooId
 
 
+def requests_wrapper(f):
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        custom_headers = {"X-Viaa-Request-Id": meemooId()}
+        headers = kwgs.pop("headers", None) or {}
+        headers.update(custom_headers)
+        return f(*args, headers=headers, **kwgs)
+
+    return wrapper
+
+
 def init_flask(app):
     app.wsgi_app = CorrelationMiddleware(app.wsgi_app)
+
     print("Flask patched up and ready to go")
+
+
+def init_requests(requests):
+    requests.api.request = requests_wrapper(requests.api.request)
+    requests.api.get = requests_wrapper(requests.api.get)
+    requests.api.options = requests_wrapper(requests.api.options)
+    requests.api.head = requests_wrapper(requests.api.head)
+    requests.api.post = requests_wrapper(requests.api.post)
+    requests.api.put = requests_wrapper(requests.api.put)
+    requests.api.patch = requests_wrapper(requests.api.patch)
+    requests.api.delete = requests_wrapper(requests.api.delete)
+
+    print("Requests patched up and ready to go")
 
 
 class CorrelationMiddleware:
