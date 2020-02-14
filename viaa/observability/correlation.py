@@ -2,6 +2,7 @@ import sys
 import uuid
 from functools import wraps
 
+import pika
 from flask import request
 from werkzeug.wrappers import Request, Response, ResponseStream
 
@@ -26,6 +27,27 @@ def requests_wrapper(f):
     return wrapper
 
 
+# TODO: cleanup, see requests_wrapper
+def rabbit_wrapper(f):
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        properties = kwgs.get("properties")
+        if properties is None:
+            properties = pika.BasicProperties(headers={"X-Viaa-Request-Id": meemooId()})
+        else:
+            if properties.headers is None:
+                properties.headers = {"X-Viaa-Request-Id": meemooId()}
+            else:
+                properties.headers = {
+                    **properties.headers,
+                    "X-Viaa-Request-Id": meemooId(),
+                }
+        kwgs["properties"] = properties
+        return f(*args, **kwgs)
+
+    return wrapper
+
+
 def init_flask(app):
     app.wsgi_app = CorrelationMiddleware(app.wsgi_app)
 
@@ -43,6 +65,15 @@ def init_requests(requests):
     requests.api.delete = requests_wrapper(requests.api.delete)
 
     print("Requests patched up and ready to go")
+
+
+def init_rabbit(pika):
+    sys.modules.get("pika")
+    pika.channel.Channel.basic_publish = rabbit_wrapper(
+        pika.channel.Channel.basic_publish
+    )
+
+    print("Rabbit patched up and ready to go")
 
 
 class CorrelationMiddleware:
