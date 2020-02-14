@@ -16,6 +16,14 @@ def meemooId():
     return meemooId
 
 
+def logger_wrapper(f):
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        return f(*args, correlationId=meemooId(), **kwgs)
+
+    return wrapper
+
+
 def requests_wrapper(f):
     @wraps(f)
     def wrapper(*args, **kwgs):
@@ -52,6 +60,12 @@ def init_flask(app):
     app.wsgi_app = CorrelationMiddleware(app.wsgi_app)
 
     print("Flask patched up and ready to go")
+
+
+def init_logger(logger):
+    logger.log = logger_wrapper(logger.log)
+
+    print("Logger patched up and ready to go")
 
 
 def init_requests(requests):
