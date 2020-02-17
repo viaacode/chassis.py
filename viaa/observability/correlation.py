@@ -1,4 +1,5 @@
 import sys
+import threading
 import uuid
 from functools import wraps
 
@@ -9,9 +10,12 @@ from werkzeug.wrappers import Request, Response, ResponseStream
 
 def meemooId():
     try:
-        meemooId = request.headers.get("X-Viaa-Request-Id", uuid.uuid4().hex)
+        meemooId = request.headers.get("X-Viaa-Request-Id")
     except Exception:
-        meemooId = uuid.uuid4().hex
+        if len(threading.current_thread().name) == 32:
+            meemooId = threading.current_thread().name
+        else:
+            meemooId = uuid.uuid4().hex
 
     return meemooId
 
@@ -35,8 +39,7 @@ def requests_wrapper(f):
     return wrapper
 
 
-# TODO: cleanup, see requests_wrapper
-def rabbit_wrapper(f):
+def outgoing_rabbit_wrapper(f):
     @wraps(f)
     def wrapper(*args, **kwgs):
         properties = kwgs.get("properties")
@@ -56,38 +59,59 @@ def rabbit_wrapper(f):
     return wrapper
 
 
+def incoming_rabbit_wrapper(f):
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        callback_function = kwgs.pop("on_message_callback", None)
+        callback_function = __get_request_id_from_rabbit_message(callback_function)
+        return f(*args, on_message_callback=callback_function, **kwgs)
+
+    return wrapper
+
+
+def __get_request_id_from_rabbit_message(f):
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        properties = args[2]
+        threading.current_thread().name = properties.headers.get(
+            "X-Viaa-Request-Id", uuid.uuid4().hex
+        )
+
+        return f(*args, **kwgs)
+
+    return wrapper
+
+
 def init_flask(app):
     app.wsgi_app = CorrelationMiddleware(app.wsgi_app)
-
-    print("Flask patched up and ready to go")
 
 
 def init_logger(logger):
     logger.log = logger_wrapper(logger.log)
-
-    print("Logger patched up and ready to go")
+    logger.info = logger_wrapper(logger.info)
+    logger.warn = logger_wrapper(logger.warn)
+    logger.warning = logger_wrapper(logger.warning)
+    logger.critical = logger_wrapper(logger.critical)
+    logger.debug = logger_wrapper(logger.debug)
 
 
 def init_requests(requests):
     requests.api.request = requests_wrapper(requests.api.request)
-    requests.api.get = requests_wrapper(requests.api.get)
-    requests.api.options = requests_wrapper(requests.api.options)
-    requests.api.head = requests_wrapper(requests.api.head)
-    requests.api.post = requests_wrapper(requests.api.post)
-    requests.api.put = requests_wrapper(requests.api.put)
-    requests.api.patch = requests_wrapper(requests.api.patch)
-    requests.api.delete = requests_wrapper(requests.api.delete)
-
-    print("Requests patched up and ready to go")
+    requests.sessions.Session.request = requests_wrapper(
+        requests.sessions.Session.request
+    )
 
 
-def init_rabbit(pika):
-    sys.modules.get("pika")
-    pika.channel.Channel.basic_publish = rabbit_wrapper(
+def init_outgoing_rabbit(pika):
+    pika.channel.Channel.basic_publish = outgoing_rabbit_wrapper(
         pika.channel.Channel.basic_publish
     )
 
-    print("Rabbit patched up and ready to go")
+
+def init_incoming_rabbit(pika):
+    pika.channel.Channel.basic_consume = incoming_rabbit_wrapper(
+        pika.channel.Channel.basic_consume
+    )
 
 
 class CorrelationMiddleware:
