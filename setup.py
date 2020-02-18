@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="viaa-chassis",
-    version="0.1.1",
+    version="0.1.2",
     url="https://github.com/viaacode/chassis.py",
     license="GPL",
     author="Rudolf",

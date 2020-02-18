@@ -44,15 +44,9 @@ def outgoing_rabbit_wrapper(f):
     def wrapper(*args, **kwgs):
         properties = kwgs.get("properties")
         if properties is None:
-            properties = pika.BasicProperties(headers={"X-Viaa-Request-Id": meemooId()})
+            properties = pika.BasicProperties(correlation_id=meemooId())
         else:
-            if properties.headers is None:
-                properties.headers = {"X-Viaa-Request-Id": meemooId()}
-            else:
-                properties.headers = {
-                    **properties.headers,
-                    "X-Viaa-Request-Id": meemooId(),
-                }
+            properties.correlation_id = meemooId()
         kwgs["properties"] = properties
         return f(*args, **kwgs)
 
@@ -73,9 +67,7 @@ def __get_request_id_from_rabbit_message(f):
     @wraps(f)
     def wrapper(*args, **kwgs):
         properties = args[2]
-        threading.current_thread().name = properties.headers.get(
-            "X-Viaa-Request-Id", uuid.uuid4().hex
-        )
+        threading.current_thread().name = properties.correlation_id
 
         return f(*args, **kwgs)
 
