@@ -9,9 +9,10 @@ Currently implemented:
 - Configuration
 - Observability
   - Logging
+  - Correlation
 
 ## Usage
-Start by installing the library with `pip install viaa`, it is located on the VIAA PyPI.
+Start by installing the library with `pip install viaa-chassis`, it is located on the VIAA PyPI.
 
 ### Configuration
 
@@ -77,9 +78,8 @@ This tutorial expects you to be familiar with Python and the basics of web appli
 First, let’s create a folder and virtual environment to isolate the code and dependencies for this project.
 
 ```shell
-$ virtualenv ./<project-name>
-$ cd ./<project-name>
-$ source bin/activate
+$ python -m venv env
+$ source env/bin/activate
 $ pip install viaa-chassis
 ```
 
