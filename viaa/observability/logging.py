@@ -98,7 +98,7 @@ def __add_log_source_to_dict(logger, _, event_dict):
         event_dict["source_original"] = event_dict["source"]
 
     (frame, name) = _find_first_app_frame_and_name(
-        additional_ignores=["logging", __name__]
+        additional_ignores=["logging", "correlation", "viaa", __name__]
     )
 
     if not frame:
