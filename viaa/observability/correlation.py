@@ -136,6 +136,18 @@ def init_incoming_rabbit(pika):
     )
 
 
+def initialize(flask=None, logger=None, requests=None, pika=None):
+    if flask:
+        init_flask(flask)
+    if logger:
+        init_logger(logger)
+    if requests:
+        init_requests(requests)
+    if pika:
+        init_incoming_rabbit(pika)
+        init_outgoing_rabbit(pika)
+
+
 class CorrelationMiddleware:
     """
     Middleware to check if a viaa request id is present in the request header.
