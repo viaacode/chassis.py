@@ -1,9 +1,12 @@
-# VIAA Chassis
+# Meemoo Chassis
 
-**Important: this library is currently only available on the internal VIAA PyPI, make sure to update your [pip-config](https://pip.pypa.io/en/stable/user_guide/#config-file)**
+**Important: this library is currently only available on the internal Meemoo
+PyPI, make sure to update your
+[pip-config](https://pip.pypa.io/en/stable/user_guide/#config-file)**
 
 
-In this repository solutions for cross-cutting concerns will be gathered. This is a work in progress and it will always be...
+In this repository solutions for cross-cutting concerns will be gathered. This
+is a work in progress and it will always be...
 
 Currently implemented:
 - Configuration
@@ -12,20 +15,23 @@ Currently implemented:
   - Correlation
 
 ## Usage
-Start by installing the library with `pip install viaa-chassis`, it is located on the VIAA PyPI.
+
+Start by installing the library with `pip install viaa-chassis`, it is located
+on the Meemoo PyPI.
 
 ### Configuration
 
 You can use the configuration to configure the other modules in the chassis.
-You call the ConfigParser and you will get a config dictionary containing all the keys and values.
-The dictionary is filled based on following priority:
+You call the `ConfigParser` and you will get a config dictionary containing all
+the keys and values. The dictionary is filled based on following priority:
 
 1. command line arguments (*not implemented*)
 2. environment variables (*not implemented*)
 3. config.yml file in the project root folder
 4. default values
 
-An example config file is included in this repository, see `config.yml.example`.
+An example config file is included in this repository, see
+`config.yml.example`.
 
 ```python
 from viaa.configuration import ConfigParser
@@ -71,7 +77,11 @@ Will print:
 
 #### Prerequisites
 
-This tutorial expects you to be familiar with Python and the basics of web application development. We will use  [Python 3.7](https://www.python.org/)  and  [virtual environments](https://virtualenv.pypa.io/en/stable/). To get set up, see  [this guide on installing Python](https://realpython.com/installing-python/).
+This tutorial expects you to be familiar with Python and the basics of web
+application development. We will use [Python 3.7](https://www.python.org/)
+and  [virtual environments](https://virtualenv.pypa.io/en/stable/). To get set
+up, see  [this guide on installing
+Python](https://realpython.com/installing-python/).
 
 #### Preparing the environment
 
@@ -100,7 +110,7 @@ if __name__ == "__main__":
 
 Optional: make a new virtual environment and activate it.
 
-First we install `flask` and `viaa-chassis` using pip. (Note: viaa-chassis is only available on the VIAA PyPI)
+First we install `flask` and `viaa-chassis` using pip. (Note: viaa-chassis is only available on the Meemoo PyPI)
 
 ```shell
 $ pip install flask
