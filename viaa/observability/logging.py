@@ -6,7 +6,7 @@
 #
 
 import inspect
-import logging
+import logging as stdlogging
 import sys
 
 import structlog
@@ -14,6 +14,9 @@ from pythonjsonlogger import jsonlogger
 from structlog._frames import _find_first_app_frame_and_name
 
 from viaa.configuration import ConfigParser
+
+# Constants
+LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 loggers: dict = {}
 
@@ -46,7 +49,9 @@ def __configure(logger, config: dict) -> object:
         config {dict} -- Configuration for the logging.
     """
     if "level" in config:
-        logger.setLevel(config["level"])
+        loglevel = config["level"]
+        assert loglevel in LOG_LEVELS, f"Unknown loglevel: {loglevel}"
+        logger.setLevel(loglevel)
 
     return logger
 
@@ -82,9 +87,9 @@ def __init():
         cache_logger_on_first_use=True,
     )
 
-    handler = logging.StreamHandler(sys.stdout)
+    handler = stdlogging.StreamHandler(sys.stdout)
     handler.setFormatter(jsonlogger.JsonFormatter())
-    root_logger = logging.getLogger()
+    root_logger = stdlogging.getLogger()
 
     # Handlers are removed because otherwise multiple get_logger calls leads to multiple log lines.
     root_logger.handlers = []

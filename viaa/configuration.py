@@ -27,7 +27,7 @@ class ConfigParser:
                 cfg: dict = yaml.load(ymlfile, Loader=yaml.FullLoader)
         # Fallback to default
         else:
-            cfg = {"viaa": {"logging": {"level": 20}}}
+            cfg = {"viaa": {"logging": {"level": "DEBUG"}}}
 
         if "viaa" in cfg:
             self.config = cfg["viaa"]
