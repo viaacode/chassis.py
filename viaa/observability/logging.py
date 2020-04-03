@@ -2,23 +2,45 @@
 #
 #  @Author: Rudolf De Geijter
 #
-#  viaa/logging.py
+#  viaa/observability/logging.py
 #
 
 import inspect
 import logging as stdlogging
 import sys
+from functools import wraps
 
 import structlog
 from pythonjsonlogger import jsonlogger
 from structlog._frames import _find_first_app_frame_and_name
 
 from viaa.configuration import ConfigParser
+from viaa.observability.correlation import CorrelationID
 
 # Constants
 LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 loggers: dict = {}
+
+
+def logger_wrapper(f):
+    """ The correlation id is added to the kwargs of every log statement. """
+
+    @wraps(f)
+    def wrapper(*args, **kwgs):
+        return f(*args, correlationId=CorrelationID().correlation_id, **kwgs)
+
+    return wrapper
+
+
+def init_logger(logger):
+    """ Wrap all logging methods in the logger. """
+    logger.log = logger_wrapper(logger.log)
+    logger.info = logger_wrapper(logger.info)
+    logger.warn = logger_wrapper(logger.warn)
+    logger.warning = logger_wrapper(logger.warning)
+    logger.critical = logger_wrapper(logger.critical)
+    logger.debug = logger_wrapper(logger.debug)
 
 
 def get_logger(name="", config: ConfigParser = None):
@@ -38,6 +60,8 @@ def get_logger(name="", config: ConfigParser = None):
     if config is not None:
         logger = __configure(logger, config.config["logging"])
 
+    init_logger(logger)
+    
     return logger
 
 

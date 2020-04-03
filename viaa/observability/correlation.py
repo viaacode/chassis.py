@@ -1,167 +1,99 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  viaa/observability/correlation.py
+#
+
+# Builtin
+# from __future__ import annotations  # See: PEP 563
+# Postponed Evaluation of Annotations is only available from Py 3.7
 import sys
 import threading
 import uuid
 from functools import wraps
-
+from typing import Optional
+# 3d
 import pika
-from flask import request
 from werkzeug.wrappers import Request, Response, ResponseStream
+# Local
+#~ from viaa.observability import logging
+
+# Constants
+CORRELATION_ID_KEY = "X-Correlation-ID" # TODO: this is the header key: should this be moved to flask.py?
 
 
-def meemooId() -> str:
+class SingletonMeta(type):
+    """The Singleton class can be implemented in different ways in Python. Some
+    possible methods include: base class, decorator, metaclass. We will use the
+    metaclass because it is best suited for this purpose.
     """
-    Returns the current correlation id or generates a new one if there isn't one available.
+    
+    #~ _instance: Optional[SingletonMeta] = None
+    _instance: Optional = None
+    
+    #~ def __call__(self) -> SingletonMeta:
+    def __call__(self):
+        if self._instance is None:
+            self._instance = super().__call__()
+        return self._instance
+
+
+class SingletonMeta(type):
+    """The Singleton metaclass that provides a naive (non-thread-safe)
+    singleton implementation.
     """
-    try:
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class CorrelationID(metaclass=SingletonMeta):
+    """The CorrelationID singleton class"""
+    # TODO: try and remove this
+    correlation_id = None
+    #
+    def __init__(self, subject = None):
+        self.correlation_id = self._get_or_generate_correlation_id()
+    #
+    def _get_or_generate_correlation_id(self) -> str:
+        """Check if we already have a correlation ID set and generate one if not."""
+        if not self.correlation_id:
+            return self._generate_correlation_id()
+    #
+    def _generate_correlation_id(self) -> str:
+        """Generates a unique correlation ID. Although trivial enough, this is
+        the one and only place where a correlation ID may be generated as to be
+        consistent with respect to the format. The format used is
+        `uuid.uuid4().hex`, ie., 32 hexadecimal digits NOT seperated in 5
+        groups by hyphens. This, also, because they're more easy to copy-paste.
         """
-        Accessing request throws an exception if there is no request context.
-        Every incoming request through flask has a request context. An exception thus means
-        we have to get the correlation id from somewhere else.
+        return uuid.uuid4().hex
+    #
+    def get_correlation_id_from_flask(self, flask_request):
+        """Yes, we could more easily do:
+            request.headers.get(CORRELATION_ID_KEY, uuid.uuid4().hex)
+        However, than we would lose knowledge about where the correlation-ID
+        was originally generated.
         """
-        meemooId = request.headers.get("X-Viaa-Request-Id", uuid.uuid4().hex)
-    except Exception:
-        """
-        The current_thread name is set to a new uuid on incoming rabbit messages.
-        The thread name being 32 characters indicates that the name is an uuid and not 'MainThread'
-        """
-        if len(threading.current_thread().name) == 32:
-            meemooId = threading.current_thread().name
-        else:
-            meemooId = uuid.uuid4().hex
-
-    return meemooId
-
-
-def logger_wrapper(f):
-    """ The correlation id is added to the kwargs of every log statement. """
-
-    @wraps(f)
-    def wrapper(*args, **kwgs):
-        return f(*args, correlationId=meemooId(), **kwgs)
-
-    return wrapper
+        try:
+            # The headers dict should be case-insensitive (see: https://stackoverflow.com/a/57562733)
+            # We might need to explicitly convert it to lowercase in the future in the unlikely event werkzeug should change its behavior.
+            # We get the key not by the dict's `get`-method because we prefer try-except over testing for None.
+            correlation_id = flask_request.headers[CORRELATION_ID_KEY]
+            # TODO: set_correlation_origin('flask')
+            self.correlation_id = correlation_id
+            print(f"Request already contained a correlation ID: {correlation_id}")
+        except KeyError as e:
+            self.correlation_id = self._generate_correlation_id()
+            print(f"Flask request did not already contain a correlation ID: generated -> {self.correlation_id}")
+        return self.correlation_id
+    #
+    def get_correlation_id_from_amqp(self):
+        pass
 
 
-def requests_wrapper(f):
-    """ Adds the current correlation id as header to all outgoing http requests. """
+class AMQPCorrelationID(CorrelationID):
+    pass
 
-    @wraps(f)
-    def wrapper(*args, **kwgs):
-        custom_headers = {"X-Viaa-Request-Id": meemooId()}
-        headers = kwgs.pop("headers", None) or {}
-        headers.update(custom_headers)
-        return f(*args, headers=headers, **kwgs)
-
-    return wrapper
-
-
-def outgoing_rabbit_wrapper(f):
-    """ Sets the correlation_id property of a rabbit message to the current correlation id """
-
-    @wraps(f)
-    def wrapper(*args, **kwgs):
-        properties = kwgs.get("properties")
-        if properties is None:
-            properties = pika.BasicProperties(correlation_id=meemooId())
-        else:
-            properties.correlation_id = meemooId()
-        kwgs["properties"] = properties
-        return f(*args, **kwgs)
-
-    return wrapper
-
-
-def incoming_rabbit_wrapper(f):
-    """ We pop the callback function for incoming rabbit messages and we wrap the callback function. """
-
-    @wraps(f)
-    def wrapper(*args, **kwgs):
-        callback_function = kwgs.pop("on_message_callback", None)
-        callback_function = __get_request_id_from_rabbit_message(callback_function)
-        return f(*args, on_message_callback=callback_function, **kwgs)
-
-    return wrapper
-
-
-def __get_request_id_from_rabbit_message(f):
-    """ 
-    The callback function gets the following positional arguments: channel, method, properties, body.
-    The correlation id is stored in properties.correlation_id.
-    """
-
-    @wraps(f)
-    def wrapper(*args, **kwgs):
-        properties = args[2]
-        threading.current_thread().name = properties.correlation_id
-
-        return f(*args, **kwgs)
-
-    return wrapper
-
-
-def init_flask(app):
-    """ Adds our CorrelationMiddleware to the flask application. """
-    app.wsgi_app = CorrelationMiddleware(app.wsgi_app)
-
-
-def init_logger(logger):
-    """ Wrap all logging methods in the logger. """
-    logger.log = logger_wrapper(logger.log)
-    logger.info = logger_wrapper(logger.info)
-    logger.warn = logger_wrapper(logger.warn)
-    logger.warning = logger_wrapper(logger.warning)
-    logger.critical = logger_wrapper(logger.critical)
-    logger.debug = logger_wrapper(logger.debug)
-
-
-def init_requests(requests):
-    """ Wrap all (normal and from `Session`) outgoing request methods. """
-    requests.api.request = requests_wrapper(requests.api.request)
-    requests.sessions.Session.request = requests_wrapper(
-        requests.sessions.Session.request
-    )
-
-
-def init_outgoing_rabbit(pika):
-    """ Wrap outgoing messages when using `basic_publish`. """
-    pika.channel.Channel.basic_publish = outgoing_rabbit_wrapper(
-        pika.channel.Channel.basic_publish
-    )
-
-
-def init_incoming_rabbit(pika):
-    """ Wrap incoming messages when using `basic_consume`. """
-    pika.channel.Channel.basic_consume = incoming_rabbit_wrapper(
-        pika.channel.Channel.basic_consume
-    )
-
-
-def initialize(flask=None, logger=None, requests=None, pika=None):
-    if flask:
-        init_flask(flask)
-    if logger:
-        init_logger(logger)
-    if requests:
-        init_requests(requests)
-    if pika:
-        init_incoming_rabbit(pika)
-        init_outgoing_rabbit(pika)
-
-
-class CorrelationMiddleware:
-    """
-    Middleware to check if a viaa request id is present in the request header.
-    Generates a new one if not present.
-    """
-
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        incoming_request = Request(environ)
-
-        requestId = incoming_request.headers.get("X-Viaa-Request-Id", uuid.uuid4().hex)
-
-        environ["HTTP_X_VIAA_REQUEST_ID"] = requestId
-
-        return self.app(environ, start_response)
