@@ -8,16 +8,48 @@
 
 from viaa.configuration import ConfigParser
 
-# Constants
-DEFAULT_CONFIG = {"viaa": {"logging": {"level": "DEBUG"}}}
-
 
 # TODO: This class of tests depends on there NOT being a config.yml file
 class TestConfigNoFile:
+    """Test the configparser when no config.yml file is present in the working
+    directory.
+    """
+
+    default_config = {"viaa": {"logging": {"level": "DEBUG"}}}
+
     def test_init_config(self):
         config = ConfigParser()
-        assert config.config == DEFAULT_CONFIG["viaa"]
+        assert config.config == self.default_config["viaa"]
 
     def test_get_config(self):
         config = ConfigParser()
-        assert config.get_config() == DEFAULT_CONFIG["viaa"]
+        assert config.get_config() == self.default_config["viaa"]
+
+
+class TestConfigFileViaa:
+    """Test the configparser with a config-file with a 'viaa'-section."""
+
+    config_test_file = "tests/resources/default_config.yml"
+
+    def test_init_config(self):
+        config = ConfigParser(self.config_test_file)
+        assert config.config == config_test_file_DICT["viaa"]
+
+    def test_get_config(self):
+        config = ConfigParser(self.config_test_file)
+        assert config.get_config() == config_test_file_DICT["viaa"]
+
+
+class TestConfigFileNoViaa:
+    """Test the configparser with a config-file without a 'viaa'-section.
+    In this case, the configparser returns an empty dict."""
+
+    config_test_file = "tests/resources/config_no_viaa.yml"
+
+    def test_init_config(self):
+        config = ConfigParser(self.config_test_file)
+        assert config.config == {}
+
+    def test_get_config(self):
+        config = ConfigParser(self.config_test_file)
+        assert config.get_config() == {}

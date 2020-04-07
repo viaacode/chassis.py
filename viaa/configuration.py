@@ -26,16 +26,19 @@ class ConfigParser:
 
     config: dict = {}
 
-    def __init__(self):
+    def __init__(self, config_file="config.yml"):
         cfg = {}
         # TODO: Take config from commandline arguments
         # TODO: Take config from environment variables
         # Take config from the user's config file
-        if os.path.isfile(os.getcwd() + "/config.yml"):
-            with open(os.getcwd() + "/config.yml", "r") as ymlfile:
+        config_filepath = os.path.join(
+            os.getcwd(), config_file
+        )
+        try:
+            with open(config_filepath, "r") as ymlfile:
                 cfg: dict = yaml.load(ymlfile, Loader=yaml.FullLoader)
-        # Fallback to default
-        else:
+        except IOError as e:
+            # Fallback to default
             cfg = {"viaa": {"logging": {"level": "DEBUG"}}}
 
         if "viaa" in cfg:
