@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  configuration.py
+#
+#  Copyleft 2020 meemoo vzw
+#
+
+
 import os
 import yaml
 
