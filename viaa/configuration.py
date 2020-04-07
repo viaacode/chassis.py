@@ -27,10 +27,11 @@ class ConfigParser:
     config: dict = {}
 
     def __init__(self, config_file="config.yml"):
-        cfg = {}
-        # TODO: Take config from commandline arguments
-        # TODO: Take config from environment variables
-        # Take config from the user's config file
+        self.cfg = self._parse_config(config_file)
+        self.config = self._get_viaa_config()
+
+    def _parse_config(self, config_file) -> dict:
+        """Parse and return the full config tree."""
         config_filepath = os.path.join(os.getcwd(), config_file)
         try:
             with open(config_filepath, "r") as ymlfile:
@@ -38,9 +39,16 @@ class ConfigParser:
         except IOError as e:
             # Fallback to default
             cfg = {"viaa": {"logging": {"level": "DEBUG"}}}
+        return cfg
+        cfg = {}
 
-        if "viaa" in cfg:
-            self.config = cfg["viaa"]
+    def _get_viaa_config(self) -> dict:
+        """Return only the viaa-section of the config tree."""
+        try:
+            return self.cfg["viaa"]
+        except KeyError as e:
+            return {}
 
     def get_config(self) -> dict:
+        """Returns only the viaa-section of the config tree."""
         return self.config

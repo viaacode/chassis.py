@@ -40,6 +40,18 @@ class TestConfigFileViaa:
         assert config.get_config() == {"logging": {"level": "WARN"}}
 
 
+class TestConfigFileViaaAndApplication:
+    """Test the configparser with a config-file with a 'viaa'-section and an
+    application-specific section."""
+
+    config_test_file = "tests/resources/default_config_with_app.yml"
+
+    def test_init_config(self):
+        config = ConfigParser(self.config_test_file)
+        assert config.cfg["app"]
+        assert config.cfg["app"]["service"]["host"] == "api.example.com"
+
+
 class TestConfigFileNoViaa:
     """Test the configparser with a config-file without a 'viaa'-section.
     In this case, the configparser returns an empty dict."""

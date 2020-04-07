@@ -1,0 +1,9 @@
+viaa:
+  logging:
+    level: WARN
+app:
+  service:
+    host: api.example.com
+  list:
+    - apples
+    - pears
