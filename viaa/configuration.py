@@ -31,9 +31,7 @@ class ConfigParser:
         # TODO: Take config from commandline arguments
         # TODO: Take config from environment variables
         # Take config from the user's config file
-        config_filepath = os.path.join(
-            os.getcwd(), config_file
-        )
+        config_filepath = os.path.join(os.getcwd(), config_file)
         try:
             with open(config_filepath, "r") as ymlfile:
                 cfg: dict = yaml.load(ymlfile, Loader=yaml.FullLoader)

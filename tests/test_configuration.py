@@ -33,11 +33,11 @@ class TestConfigFileViaa:
 
     def test_init_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.config == config_test_file_DICT["viaa"]
+        assert config.config == {"logging": {"level": "WARN"}}
 
     def test_get_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.get_config() == config_test_file_DICT["viaa"]
+        assert config.get_config() == {"logging": {"level": "WARN"}}
 
 
 class TestConfigFileNoViaa:
