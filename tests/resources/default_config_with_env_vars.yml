@@ -1,0 +1,6 @@
+viaa:
+  logging:
+    level: WARN
+app:
+  log_path: !ENV "/var/${LOG_PATH}"
+  passwd: !ENV ${PASSWD}

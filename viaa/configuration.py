@@ -8,7 +8,39 @@
 
 
 import os
+import re
+
 import yaml
+
+
+yaml_loader = yaml.FullLoader
+
+ENV_TAG = "!ENV"
+pattern = re.compile(r".*?\${(\w+)}.*?")
+
+
+def env_variable_constructor(loader, node):
+    """Extracts the environment variable from the node's value.
+    
+    :param yaml.Loader loader: the yaml loader
+    :param node: the current node in the yaml
+    :return: the parsed string that contains the value of the environment
+    variable
+    """
+    value = loader.construct_scalar(node)
+    match = pattern.findall(value)
+    if match:
+        full_value = value
+        for env_var in match:
+            # TODO: refactor into class + raise error on missing env var
+            full_value = full_value.replace(
+                f"${{{env_var}}}", os.environ.get(env_var, env_var)
+            )
+        return full_value
+    return value
+
+
+yaml_loader.add_constructor(ENV_TAG, env_variable_constructor)
 
 
 class ConfigParser:
@@ -24,8 +56,6 @@ class ConfigParser:
     4. Defaults
     """
 
-    config: dict = {}
-
     def __init__(self, config_file="config.yml"):
         self.cfg = self._parse_config(config_file)
         self.config = self._get_viaa_config()
@@ -35,12 +65,11 @@ class ConfigParser:
         config_filepath = os.path.join(os.getcwd(), config_file)
         try:
             with open(config_filepath, "r") as ymlfile:
-                cfg: dict = yaml.load(ymlfile, Loader=yaml.FullLoader)
+                cfg: dict = yaml.load(ymlfile, Loader=yaml_loader)
         except IOError as e:
             # Fallback to default
             cfg = {"viaa": {"logging": {"level": "DEBUG"}}}
         return cfg
-        cfg = {}
 
     def _get_viaa_config(self) -> dict:
         """Return only the viaa-section of the config tree."""

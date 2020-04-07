@@ -6,6 +6,8 @@
 #  Copyleft 2020 meemoo vzw
 #
 
+import os
+
 from viaa.configuration import ConfigParser
 
 
@@ -65,3 +67,20 @@ class TestConfigFileNoViaa:
     def test_get_config(self):
         config = ConfigParser(self.config_test_file)
         assert config.get_config() == {}
+
+
+class TestConfigWithEnvVars:
+    """Test the configparser with a config-file with a 'viaa'-section and
+    with interpolation of several environment variables."""
+
+    config_test_file = "tests/resources/default_config_with_env_vars.yml"
+
+    os.environ["LOG_PATH"] = "logs/service"
+    os.environ["PASSWD"] = "veryverysecret"
+
+    def test_init_config(self):
+        config = ConfigParser(self.config_test_file)
+        # Test -> log_path: !ENV "/var/${LOG_PATH}"
+        assert config.cfg["app"]["log_path"] == "/var/logs/service"
+        # Test -> passwd: !ENV ${PASSWD}
+        assert config.cfg["app"]["passwd"] == "veryverysecret"
