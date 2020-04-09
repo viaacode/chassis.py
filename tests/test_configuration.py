@@ -8,6 +8,8 @@
 
 import os
 
+import pytest
+
 from viaa.configuration import ConfigParser
 
 
@@ -84,3 +86,17 @@ class TestConfigWithEnvVars:
         assert config.cfg["app"]["log_path"] == "/var/logs/service"
         # Test -> passwd: !ENV ${PASSWD}
         assert config.cfg["app"]["passwd"] == "veryverysecret"
+
+
+@pytest.mark.skip(reason="ConfigParser raises KeyError, but not here: quid?")
+class TestConfigWithMissingEnvVars:
+    """Test the configparser with a config-file with a 'viaa'-section and
+    with interpolation of several environment variables."""
+
+    config_test_file = "tests/resources/default_config_with_env_vars.yml"
+
+    os.environ["PASSWD"] = "veryverysecret"
+
+    def test_init_config(self):
+        with pytest.raises(KeyError) as excinfo:
+            config = ConfigParser(self.config_test_file)

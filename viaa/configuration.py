@@ -9,38 +9,54 @@
 
 import os
 import re
-
 import yaml
 
 
 yaml_loader = yaml.FullLoader
 
-ENV_TAG = "!ENV"
-pattern = re.compile(r".*?\${(\w+)}.*?")
 
-
-def env_variable_constructor(loader, node):
-    """Extracts the environment variable from the node's value.
-    
-    :param yaml.Loader loader: the yaml loader
-    :param node: the current node in the yaml
-    :return: the parsed string that contains the value of the environment
-    variable
+class EnvVar(yaml.YAMLObject):
+    """This constructor is automatically registerd in the Yaml loader via the
+    YAMLObjectMetaclass.
+    TODO: also add a representer? -> cls.to_yaml
     """
-    value = loader.construct_scalar(node)
-    match = pattern.findall(value)
-    if match:
-        full_value = value
+
+    # yaml_tag is what is used in the metaclass
+    yaml_tag = "!ENV"
+    yaml_loader = yaml_loader
+    pattern = re.compile(r".*?\${(\w+)}.*?")
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
+
+    # This is the YAML deserializer function: in our case, the result is a
+    # string object.
+    # TODO: do we also need a representer -> to_yaml()?
+    @classmethod
+    def from_yaml(cls, loader, node):
+        value = loader.construct_scalar(node)
+        match = cls.pattern.findall(value)
+        # TODO: if no match, means we got an '!ENV' tag but a wrong expansion
+        # syntax -> raise Error!
+        if match:
+            return cls._interpolate_env_vars(match, value)
+        return value
+
+    def _interpolate_env_vars(match, value):
         for env_var in match:
-            # TODO: refactor into class + raise error on missing env var
-            full_value = full_value.replace(
-                f"${{{env_var}}}", os.environ.get(env_var, env_var)
-            )
-        return full_value
-    return value
-
-
-yaml_loader.add_constructor(ENV_TAG, env_variable_constructor)
+            try:
+                env_var_value = os.environ[env_var]
+            except KeyError as e:
+                msg = (
+                    f'Config requires environment variable "{env_var}" which is not set'
+                )
+                raise KeyError(msg) from None
+            else:
+                value = value.replace(f"${{{env_var}}}", env_var_value)
+        return value
 
 
 class ConfigParser:

@@ -1,3 +1,8 @@
 viaa:
   logging:
-    level: INFO
+    level: WARN
+app:
+  log_path: !ENV "/var/${LOG_PATH}"
+  passwd: !ENV ${PASSWD}
+  service:
+    host: api.example.com
