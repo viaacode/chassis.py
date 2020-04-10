@@ -77,10 +77,10 @@ class TestConfigWithEnvVars:
 
     config_test_file = "tests/resources/default_config_with_env_vars.yml"
 
-    os.environ["LOG_PATH"] = "logs/service"
-    os.environ["PASSWD"] = "veryverysecret"
+    def test_init_config(self, monkeypatch):
+        monkeypatch.setenv("PASSWD", "veryverysecret")
+        monkeypatch.setenv("LOG_PATH", "logs/service")
 
-    def test_init_config(self):
         config = ConfigParser(self.config_test_file)
         # Test -> log_path: !ENV "/var/${LOG_PATH}"
         assert config.cfg["app"]["log_path"] == "/var/logs/service"
@@ -88,15 +88,14 @@ class TestConfigWithEnvVars:
         assert config.cfg["app"]["passwd"] == "veryverysecret"
 
 
-@pytest.mark.skip(reason="ConfigParser raises KeyError, but not here: quid?")
 class TestConfigWithMissingEnvVars:
     """Test the configparser with a config-file with a 'viaa'-section and
     with interpolation of several environment variables."""
 
     config_test_file = "tests/resources/default_config_with_env_vars.yml"
 
-    os.environ["PASSWD"] = "veryverysecret"
+    def test_init_config(self, monkeypatch):
+        monkeypatch.setenv("PASSWD", "veryverysecret")
 
-    def test_init_config(self):
         with pytest.raises(KeyError) as excinfo:
             config = ConfigParser(self.config_test_file)
