@@ -23,7 +23,7 @@ class TestConfigNoFile:
 
     def test_init_config(self):
         config = ConfigParser()
-        assert config.config == self.default_config["viaa"]
+        assert config.chassis_cfg == self.default_config["viaa"]
 
     def test_get_config(self):
         config = ConfigParser()
@@ -37,7 +37,7 @@ class TestConfigFileViaa:
 
     def test_init_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.config == {"logging": {"level": "WARN"}}
+        assert config.chassis_cfg == {"logging": {"level": "WARN"}}
 
     def test_get_config(self):
         config = ConfigParser(self.config_test_file)
@@ -64,7 +64,7 @@ class TestConfigFileNoViaa:
 
     def test_init_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.config == {}
+        assert config.chassis_cfg == {}
 
     def test_get_config(self):
         config = ConfigParser(self.config_test_file)

@@ -74,7 +74,8 @@ class ConfigParser:
 
     def __init__(self, config_file="config.yml"):
         self.cfg = self._parse_config(config_file)
-        self.config = self._get_viaa_config()
+        self.chassis_cfg = self._get_chassis_config()
+        self.app_cfg = self._get_app_config()
 
     def _parse_config(self, config_file) -> dict:
         """Parse and return the full config tree."""
@@ -87,13 +88,22 @@ class ConfigParser:
             cfg = {"viaa": {"logging": {"level": "DEBUG"}}}
         return cfg
 
-    def _get_viaa_config(self) -> dict:
-        """Return only the viaa-section of the config tree."""
+    def _get_chassis_config(self) -> dict:
+        """Return only the config internal to Chassis.py, ie., the viaa-section
+        of the config tree."""
         try:
             return self.cfg["viaa"]
         except KeyError as e:
             return {}
+    
+    def _get_app_config(self) -> dict:
+        """Return only the application specific configuration."""
+        try:
+            return self.cfg["app"]
+        except KeyError as e:
+            return {}
 
     def get_config(self) -> dict:
-        """Returns only the viaa-section of the config tree."""
-        return self.config
+        """Return only the config internal to Chassis.py, ie., the viaa-section
+        of the config tree."""
+        return self.chassis_cfg
