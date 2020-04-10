@@ -36,7 +36,7 @@ def get_logger(name="", config: ConfigParser = None):
         loggers[name] = logger
 
     if config is not None:
-        logger = __configure(logger, config.config["logging"])
+        logger = __configure(logger, config.chassis_cfg["logging"])
 
     return logger
 
