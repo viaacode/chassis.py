@@ -30,7 +30,7 @@ class EnvVar(yaml.YAMLObject):
         pass
 
     def __repr__(self):
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(tag={self.yaml_tag})"
 
     # This is the YAML deserializer function: in our case, the result is a
     # string object.
