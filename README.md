@@ -46,7 +46,7 @@ An example config file, `config.yml.example`, is included in this repository:
 ```yaml
 viaa:
   logging:
-    level: WARN
+    level: WARNING
 app:
   log_path: !ENV "/var/${LOG_PATH}"
   passwd: !ENV ${PASSWD}

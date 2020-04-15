@@ -1,6 +1,6 @@
 viaa:
   logging:
-    level: WARN
+    level: WARNING
 app:
   log_path: !ENV "/var/${LOG_PATH}"
   passwd: !ENV ${PASSWD}
