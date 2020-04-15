@@ -6,27 +6,27 @@
 #  Copyleft 2020 meemoo vzw
 #
 
-import os
-
 import pytest
 
 from viaa.configuration import ConfigParser
 
 
-# TODO: This class of tests depends on there NOT being a config.yml file
 class TestConfigNoFile:
     """Test the configparser when no config.yml file is present in the working
     directory.
+    TODO: Calling the ConfigParser with an explicit filepath argument would
+    only ever happen from within the application code, and thus, should raise
+    an exception instead of falling back to a default configuration (DEV-790).
     """
 
     default_config = {"viaa": {"logging": {"level": "DEBUG"}}}
 
     def test_init_config(self):
-        config = ConfigParser()
+        config = ConfigParser("non_existant_file.yml")
         assert config.chassis_cfg == self.default_config["viaa"]
 
     def test_get_config(self):
-        config = ConfigParser()
+        config = ConfigParser("non_existant_file.yml")
         assert config.get_config() == self.default_config["viaa"]
 
 
@@ -37,11 +37,11 @@ class TestConfigFileViaa:
 
     def test_init_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.chassis_cfg == {"logging": {"level": "WARN"}}
+        assert config.chassis_cfg == {"logging": {"level": "WARNING"}}
 
     def test_get_config(self):
         config = ConfigParser(self.config_test_file)
-        assert config.get_config() == {"logging": {"level": "WARN"}}
+        assert config.get_config() == {"logging": {"level": "WARNING"}}
 
 
 class TestConfigFileViaaAndApplication:
@@ -95,6 +95,8 @@ class TestConfigWithMissingEnvVars:
     config_test_file = "tests/resources/default_config_with_env_vars.yml"
 
     def test_init_config(self, monkeypatch):
+        # Make sure we have one missing env var
+        monkeypatch.delenv("LOG_PATH", raising=False)
         monkeypatch.setenv("PASSWD", "veryverysecret")
 
         with pytest.raises(KeyError) as excinfo:
