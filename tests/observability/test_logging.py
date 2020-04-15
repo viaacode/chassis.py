@@ -14,7 +14,7 @@ config = ConfigParser()
 def setup_logging():
     def _f(name, loglevel):
         # loglevel should be one of Python's standard loglevels.
-        config.config["logging"]["level"] = loglevel
+        config.chassis_cfg["logging"]["level"] = loglevel
         logger = logging.get_logger(name, config)
         return logger
     return _f
