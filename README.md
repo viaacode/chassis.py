@@ -61,7 +61,7 @@ The environment variable keys use the standard curly braces bash syntax:
 `${ENV_VAR}`.
 
 When the corresponding environment variables are not declared, the ConfigParser
-will raise a `KeyError` telling you wich environment variable is missing.
+will raise a `KeyError` telling you which environment variable is missing.
 
 More examples can be found under `tests/resources/`.
 

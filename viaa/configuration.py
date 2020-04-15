@@ -16,7 +16,7 @@ yaml_loader = yaml.FullLoader
 
 
 class EnvVar(yaml.YAMLObject):
-    """This constructor is automatically registerd in the Yaml loader via the
+    """This constructor is automatically registered in the Yaml loader via the
     YAMLObjectMetaclass.
     TODO: also add a representer? -> cls.to_yaml
     """
