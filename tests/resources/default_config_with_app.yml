@@ -1,6 +1,6 @@
 viaa:
   logging:
-    level: WARN
+    level: WARNING
 app:
   service:
     host: api.example.com
