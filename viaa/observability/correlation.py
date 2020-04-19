@@ -8,6 +8,7 @@
 # from __future__ import annotations  # See: PEP 563
 # Postponed Evaluation of Annotations is only available from Py 3.7
 import sys
+import logging
 import threading
 import uuid
 from functools import wraps
@@ -15,12 +16,12 @@ from typing import Optional
 # 3d
 import pika
 from werkzeug.wrappers import Request, Response, ResponseStream
-# Local
-#~ from viaa.observability import logging
+
 
 # Constants
 CORRELATION_ID_KEY = "X-Correlation-ID" # TODO: this is the header key: should this be moved to flask.py?
 
+log = logging.getLogger(__name__)
 
 class SingletonMeta(type):
     """The Singleton class can be implemented in different ways in Python. Some
@@ -84,10 +85,11 @@ class CorrelationID(metaclass=SingletonMeta):
             correlation_id = flask_request.headers[CORRELATION_ID_KEY]
             # TODO: set_correlation_origin('flask')
             self.correlation_id = correlation_id
-            print(f"Request already contained a correlation ID: {correlation_id}")
+            log.debug(f"Request already contained a correlation ID: {flask_request.headers}")
         except KeyError as e:
             self.correlation_id = self._generate_correlation_id()
-            print(f"Flask request did not already contain a correlation ID: generated -> {self.correlation_id}")
+            log.debug(f"Flask request did not already contain a correlation ID: generated -> {self.correlation_id}")
+            log.debug(flask_request.headers)
         return self.correlation_id
     #
     def get_correlation_id_from_amqp(self):
