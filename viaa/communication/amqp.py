@@ -65,3 +65,4 @@ class amqp:
     )
     ConnectionParameters = pika.ConnectionParameters
     BlockingConnection = pika.BlockingConnection
+    BasicProperties = pika.BasicProperties
