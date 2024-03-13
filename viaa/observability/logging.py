@@ -21,7 +21,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 loggers: dict = {}
 
 
-def get_logger(name="", config: ConfigParser = None):
+def get_logger(name="", config: ConfigParser = None) -> structlog.stdlib.BoundLogger:
     """Return a logger with the specified name and configuration, creating it if necessary.
     If no name is specified, return the root logger.
     If a config is specified it will override the current config for a logger.
